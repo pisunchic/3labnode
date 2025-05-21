@@ -53,11 +53,43 @@ async function validateFiles() {
 // Парсинг входных данных
 function parseInput(input) {
   try {
-    // Если строка начинается с [, парсим как JSON-массив
+    // Для задачи manhattan сначала проверяем упрощенный формат
+    if (options.task === 'manhattan') {
+      console.log('Debug - Input received:', input); // Отладочный вывод
+      console.log('Debug - Input type:', typeof input); // Тип входных данных
+      console.log('Debug - Input starts with [[:', input.trim().startsWith('[[')); // Проверка начала строки
+      
+      // Если это полный JSON формат
+      if (input.trim().startsWith('[[')) {
+        const parsed = JSON.parse(input);
+        if (Array.isArray(parsed) && parsed.length === 2 && 
+            Array.isArray(parsed[0]) && Array.isArray(parsed[1])) {
+          return parsed;
+        }
+      }
+      
+      // Пытаемся разобрать как упрощенный формат
+      const points = input.split(',').map(s => s.trim());
+      console.log('Debug - Split points:', points); // Отладочный вывод разбитых точек
+      
+      if (points.length === 2) {
+        // Пытаемся разобрать каждую точку как массив координат
+        const point1 = points[0].replace(/[\[\]]/g, '').split(',').map(Number);
+        const point2 = points[1].replace(/[\[\]]/g, '').split(',').map(Number);
+        console.log('Debug - Parsed points:', [point1, point2]); // Отладочный вывод разобранных точек
+        
+        if (point1.length === 2 && point2.length === 2 && 
+            !point1.includes(NaN) && !point2.includes(NaN)) {
+          return [point1, point2];
+        }
+      }
+      throw new Error('Введите две точки в формате: [x1,y1],[x2,y2] или [[x1,y1],[x2,y2]]');
+    }
+
+    // Для других задач
     if (input.trim().startsWith('[')) {
       return JSON.parse(input);
     }
-    // Иначе разбиваем по разделителю и возвращаем массив
     return input.split(options.delimiter).map(s => s.trim()).filter(s => s);
   } catch (error) {
     throw new Error(`Ошибка парсинга входных данных: ${error.message}`);
@@ -107,8 +139,19 @@ async function* readStdin() {
     terminal: false
   });
 
-  console.log('Введите массив строк в формате JSON (например: ["Hello", "there", "I\'m", "fine"])');
-  console.log('или строки, разделенные двоеточием (например: Hello:there:I\'m:fine)');
+  // Выводим разное приветствие в зависимости от задачи
+  if (options.task === 'manhattan') {
+    console.log('Введите две точки в одном из форматов:');
+    console.log('1. [[x1,y1],[x2,y2]] (например: [[1,1],[1,1]])');
+    console.log('2. [x1,y1],[x2,y2] (например: [1,1],[1,1])');
+    console.log('\nПримеры:');
+    console.log('[[1,1],[1,1]] или [1,1],[1,1] => 0');
+    console.log('[[5,4],[3,2]] или [5,4],[3,2] => 4');
+    console.log('[[1,1],[0,3]] или [1,1],[0,3] => 3');
+  } else {
+    console.log('Введите массив строк в формате JSON (например: ["Hello", "there", "I\'m", "fine"])');
+    console.log('или строки, разделенные двоеточием (например: Hello:there:I\'m:fine)');
+  }
   console.log('Для выхода нажмите Ctrl+C\n');
 
   for await (const line of rl) {
