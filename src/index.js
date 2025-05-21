@@ -14,13 +14,13 @@ const __dirname = dirname(__filename);
 
 const program = new Command();
 
-// Настройка CLI
+// Настройка CLI с значениями по умолчанию
 program
   .name('cli-tasks')
   .description('CLI инструмент для решения задач с поддержкой потоковой обработки данных')
   .option('-i, --input <path>', 'путь к входному файлу')
   .option('-o, --output <path>', 'путь к выходному файлу')
-  .option('-t, --task <name>', 'название задачи', true)
+  .option('-t, --task <name>', 'название задачи', 'sortme')  // по умолчанию sortme
   .option('-f, --format <format>', 'формат входных данных (string, array, json)', 'string')
   .option('-d, --delimiter <char>', 'разделитель для множественных параметров', ':')
   .parse(process.argv);
@@ -53,16 +53,12 @@ async function validateFiles() {
 // Парсинг входных данных
 function parseInput(input) {
   try {
-    switch (options.format) {
-      case 'string':
-        return input.split(options.delimiter);
-      case 'array':
-        return input.split(options.delimiter).map(item => JSON.parse(item.trim()));
-      case 'json':
-        return JSON.parse(input);
-      default:
-        throw new Error(`Неподдерживаемый формат данных: ${options.format}`);
+    // Если строка начинается с [, парсим как JSON-массив
+    if (input.trim().startsWith('[')) {
+      return JSON.parse(input);
     }
+    // Иначе разбиваем по разделителю и возвращаем массив
+    return input.split(options.delimiter).map(s => s.trim()).filter(s => s);
   } catch (error) {
     throw new Error(`Ошибка парсинга входных данных: ${error.message}`);
   }
@@ -73,12 +69,9 @@ async function createTaskStream(taskName) {
   try {
     const taskPath = join(__dirname, 'tasks', `${taskName}.js`);
     const taskUrl = 'file://' + taskPath.replace(/\\/g, '/');
-    console.log('Пытаюсь загрузить задачу из:', taskUrl);
-    console.log('Файл существует:', await access(taskPath).then(() => true).catch(() => false));
+    console.log(`Задача: ${taskName}`);
     
     const taskModule = await import(taskUrl);
-    console.log('Модуль успешно загружен:', taskModule);
-    
     return new Transform({
       objectMode: true,
       transform(chunk, encoding, callback) {
@@ -90,7 +83,7 @@ async function createTaskStream(taskName) {
           }
 
           const parsedInput = parseInput(input);
-          const result = taskModule.process(...parsedInput);
+          const result = taskModule.process(parsedInput);
           
           // Преобразуем результат в строку, если это не строка
           const output = typeof result === 'string' ? result : JSON.stringify(result);
@@ -114,18 +107,14 @@ async function* readStdin() {
     terminal: false
   });
 
-  // Выводим приветственное сообщение только при чтении из консоли
-  if (!options.input) {
-    console.log('Введите данные (Ctrl+C для выхода):');
-  }
+  console.log('Введите массив строк в формате JSON (например: ["Hello", "there", "I\'m", "fine"])');
+  console.log('или строки, разделенные двоеточием (например: Hello:there:I\'m:fine)');
+  console.log('Для выхода нажмите Ctrl+C\n');
 
   for await (const line of rl) {
     if (line.trim()) {
       yield line;
-      // Если читаем из консоли, выводим приглашение для следующего ввода
-      if (!options.input) {
-        console.log('Введите новые данные или Ctrl+C для выхода:');
-      }
+      console.log('\nВведите следующую строку или Ctrl+C для выхода:');
     }
   }
 }

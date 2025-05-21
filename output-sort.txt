@@ -1,0 +1,1 @@
+["fine\r\n[\"C\",\"d\",\"a\",\"B\"]\r\n[\"CodeWars\"]\r\n[\"apple\",\"Banana\",\"cherry\",\"Date\"]\r\n[\"z\",\"y\",\"x\",\"w\",\"v\"]","Hello","I'm","there"]
