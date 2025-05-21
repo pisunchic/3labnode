@@ -3,6 +3,8 @@
  * Эта задача просто переворачивает входную строку
  */
 
-export function process(input) {
+const process = (input) => {
   return input.split('').reverse().join('') + '\n';
-} 
+};
+
+export { process }; 

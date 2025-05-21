@@ -71,7 +71,14 @@ function parseInput(input) {
 // Создание потока для задачи
 async function createTaskStream(taskName) {
   try {
-    const taskModule = await import(join(__dirname, 'tasks', `${taskName}.js`));
+    const taskPath = join(__dirname, 'tasks', `${taskName}.js`);
+    const taskUrl = 'file://' + taskPath.replace(/\\/g, '/');
+    console.log('Пытаюсь загрузить задачу из:', taskUrl);
+    console.log('Файл существует:', await access(taskPath).then(() => true).catch(() => false));
+    
+    const taskModule = await import(taskUrl);
+    console.log('Модуль успешно загружен:', taskModule);
+    
     return new Transform({
       objectMode: true,
       transform(chunk, encoding, callback) {
