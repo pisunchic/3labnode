@@ -1,0 +1,20 @@
+{
+  "name": "cli-tasks",
+  "version": "1.0.0",
+  "description": "CLI инструмент для решения задач с поддержкой потоковой обработки данных",
+  "main": "src/index.js",
+  "type": "module",
+  "bin": {
+    "cli-tasks": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["cli", "tasks", "streams"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^11.1.0"
+  }
+} 
